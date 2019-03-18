@@ -10,52 +10,68 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final PathHistory _paths = PathHistory();
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Column(
-          children: <Widget>[
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                child: GestureDetector(
-                  child: ClipRect(
-                    child: CustomPaint(
-                      painter: Painter(_paths),
-                    ),
-                  ),
-                  onPanStart: _start,
-                  onPanUpdate: _update,
-                  onPanEnd: _end,
+      home: PainterApp(),
+    );
+  }
+}
+
+class PainterApp extends StatefulWidget {
+  @override
+  _PainterAppState createState() => _PainterAppState();
+}
+
+class _PainterAppState extends State<PainterApp> {
+  final PathHistory _paths = PathHistory();
+  double topMargin;
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+    topMargin = mediaQuery.padding.top + kToolbarHeight;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      body: Column(
+        children: <Widget>[
+          Container(
+            width: mediaQuery.size.width,
+            height: (mediaQuery.size.height / 2) - topMargin,
+            child: GestureDetector(
+              child: ClipRect(
+                child: CustomPaint(
+                  painter: Painter(_paths),
                 ),
               ),
+              onPanStart: _start,
+              onPanUpdate: _update,
+              onPanEnd: _end,
             ),
-            Expanded(child: NativePaintWidget()),
-          ],
-        ),
+          ),
+          Expanded(child: NativePaintWidget()),
+        ],
       ),
     );
   }
 
   void _start(DragStartDetails details) {
-    _paths.add(details.globalPosition);
+    var position = details.globalPosition;
+    _paths.add(Offset(position.dx, position.dy - topMargin));
   }
 
   void _update(DragUpdateDetails details) {
-    _paths.updateCurrent(details.globalPosition);
+    var position = details.globalPosition;
+    _paths.updateCurrent(Offset(position.dx, position.dy - topMargin));
   }
 
   void _end(DragEndDetails details) {
     _paths.endCurrent();
   }
 }
+
 
 class Painter extends CustomPainter {
   Painter(this.paths) : super(repaint: paths);
